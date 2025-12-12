@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-          ${details.participants.length > 0 ? `<div class="participants"><strong>Participants:</strong><ul>${details.participants.map(p => `<li>${p}</li>`).join('')}</ul></div>` : ''}
+          ${details.participants.length > 0 ? `<div class="participants"><strong>Participants:</strong><ul>${details.participants.map(p => `<li><span>${p}</span><button class="delete-btn" data-activity="${name}" data-email="${p}">×</button></li>`).join('')}</ul></div>` : ''}
         `;
 
         activitiesList.appendChild(activityCard);
@@ -63,6 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        fetchActivities(); // Refresh the activities list to show the new participant
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
@@ -79,6 +80,34 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDiv.className = "error";
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
+    }
+  });
+
+  // Handle delete button clicks
+  document.addEventListener('click', async (event) => {
+    if (event.target.classList.contains('delete-btn')) {
+      const activity = event.target.dataset.activity;
+      const email = event.target.dataset.email;
+
+      try {
+        const response = await fetch(
+          `/activities/${encodeURIComponent(activity)}/unregister?email=${encodeURIComponent(email)}`,
+          {
+            method: "POST",
+          }
+        );
+
+        const result = await response.json();
+
+        if (response.ok) {
+          fetchActivities(); // Refresh the activities list
+        } else {
+          alert(result.detail || "An error occurred while unregistering");
+        }
+      } catch (error) {
+        alert("Failed to unregister. Please try again.");
+        console.error("Error unregistering:", error);
+      }
     }
   });
 
